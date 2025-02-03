@@ -38,6 +38,20 @@
   <audio id="beepSound" src="beep.mp3" preload="auto"></audio>
   <audio id="alarmSound" src="alarm.mp3" preload="auto" loop></audio>
   <!-- ▲ alarmSound は loop属性をつけて10秒間繰り返し再生させる想定 -->
+<!-- index.html のどこかに追加 -->
+<button id="enableAudioBtn">音声を有効化</button>
+
+<script>
+  document.getElementById('enableAudioBtn').addEventListener('click', () => {
+    const beep = document.getElementById('beepSound');
+    beep.currentTime = 0;
+    beep.play().then(() => {
+      console.log("Audio unlocked on iOS Safari.");
+    }).catch(err => {
+      console.log("Failed to unlock audio:", err);
+    });
+  });
+</script>
 
   <script src="main.js"></script>
 </body>
