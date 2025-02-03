@@ -6,12 +6,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="idle-bg">
+
   <div class="timer-container">
-    <h1>タイマー設定</h1>
+    <h1>繰り返しタイマー設定</h1>
 
     <!-- 入力エリア -->
     <div class="input-area">
-      <label for="workTime">作業時間(分):</label>
+      <label for="workTime">学習時間(分):</label>
       <input type="number" id="workTime" value="65" min="1">
 
       <label for="breakTime">休憩時間(分):</label>
@@ -34,24 +35,252 @@
     </div>
   </div>
 
-  <!-- ▼ 追加: オーディオ要素を配置。hiddenで非表示にするなどお好みでOK -->
+  <!-- ▼ 音声要素 -->
   <audio id="beepSound" src="beep.mp3" preload="auto"></audio>
   <audio id="alarmSound" src="alarm.mp3" preload="auto" loop></audio>
-  <!-- ▲ alarmSound は loop属性をつけて10秒間繰り返し再生させる想定 -->
-<!-- index.html のどこかに追加 -->
-<button id="enableAudioBtn">音声を有効化</button>
 
-<script>
-  document.getElementById('enableAudioBtn').addEventListener('click', () => {
-    const beep = document.getElementById('beepSound');
-    beep.currentTime = 0;
-    beep.play().then(() => {
-      console.log("Audio unlocked on iOS Safari.");
-    }).catch(err => {
-      console.log("Failed to unlock audio:", err);
+  <!-- ▼ 音声有効化ボタン (iOS Safariなどで自動再生するための対策) -->
+  <button id="enableAudioBtn">音声を有効化</button>
+  <script>
+    document.getElementById('enableAudioBtn').addEventListener('click', () => {
+      const beep = document.getElementById('beepSound');
+      beep.currentTime = 0;
+      beep.play().then(() => {
+        console.log("Audio unlocked on iOS Safari.");
+      }).catch(err => {
+        console.log("Failed to unlock audio:", err);
+      });
     });
+  </script>
+
+  <script>
+  /**
+   * フェーズ:
+   *   - 'idle'  (待機/停止中)
+   *   - 'work'  (作業中)
+   *   - 'break' (休憩中)
+   *
+   * 休憩フェーズ中、残り10秒を切ったら画面赤＋アラーム音を鳴らす。
+   */
+  let currentPhase = 'idle';
+  let timeLeft = 0;         // 残り秒数
+  let initialTime = 0;      // フェーズ開始時点の秒数
+  let timerInterval = null; // setInterval 用
+
+  // 音声要素
+  let beepSound = null;
+  let alarmSound = null;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn  = document.getElementById('stopBtn');
+
+    startBtn.addEventListener('click', startTimer);
+    stopBtn.addEventListener('click', stopTimer);
+
+    // 音声要素の取得
+    beepSound = document.getElementById('beepSound');
+    alarmSound = document.getElementById('alarmSound');
   });
-</script>
+
+  /** スタート */
+  function startTimer() {
+    const workMinutes  = parseInt(document.getElementById('workTime').value, 10);
+    const breakMinutes = parseInt(document.getElementById('breakTime').value, 10);
+
+    if (isNaN(workMinutes) || isNaN(breakMinutes) || workMinutes <= 0 || breakMinutes <= 0) {
+      alert('作業時間と休憩時間は正の数値を入力してください。');
+      return;
+    }
+
+    // ボタン状態
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('stopBtn').disabled = false;
+
+    // 作業フェーズ開始
+    setPhase('work', workMinutes);
+
+    // カウントダウン開始
+    timerInterval = setInterval(updateTimer, 1000);
+  }
+
+  /** ストップ */
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    currentPhase = 'idle';
+    timeLeft = 0;
+    initialTime = 0;
+
+    // 表示リセット
+    document.getElementById('timeDisplay').textContent = '00:00';
+    document.getElementById('phaseLabel').textContent = '停止中';
+
+    // 背景色: 待機へ
+    setBackgroundClass('idle');
+    // 進捗バー色: 待機へ
+    setProgressBarClass('idle');
+
+    // ボタン状態
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = true;
+
+    // 幅を0%
+    document.getElementById('progressBar').style.width = '0%';
+
+    // アラーム停止
+    if (alarmSound) {
+      alarmSound.pause();
+      alarmSound.currentTime = 0;
+    }
+  }
+
+  /** フェーズ設定 */
+  function setPhase(phase, minutes) {
+    currentPhase = phase;
+    initialTime = minutes * 60;
+    timeLeft = initialTime;
+
+    // ラベル
+    const phaseLabel = document.getElementById('phaseLabel');
+    switch (phase) {
+      case 'work':
+        phaseLabel.textContent = '学習中';
+        break;
+      case 'break':
+        phaseLabel.textContent = '休憩中';
+        break;
+      default:
+        phaseLabel.textContent = '待機中';
+    }
+
+    // 背景色＆進捗バー色を切り替え
+    setBackgroundClass(phase);
+    setProgressBarClass(phase);
+
+    // 画面表示更新
+    updateDisplay();
+  }
+
+  /** 1秒ごとにカウントダウン */
+  function updateTimer() {
+    if (timeLeft > 0) {
+      timeLeft--;
+      updateDisplay();
+    }
+
+    if (timeLeft <= 0) {
+      // フェーズ終了処理
+      if (currentPhase === 'work') {
+        // 作業終了 → 休憩へ
+        if (beepSound) beepSound.play(); // 作業終了の合図
+
+        const breakMins = parseInt(document.getElementById('breakTime').value, 10);
+        setPhase('break', breakMins);
+
+      } else if (currentPhase === 'break') {
+        // 休憩終了 → 作業へ
+        if (alarmSound) {
+          alarmSound.pause();
+          alarmSound.currentTime = 0;
+        }
+        if (beepSound) beepSound.play(); // 休憩終了の合図
+
+        const workMins = parseInt(document.getElementById('workTime').value, 10);
+        setPhase('work', workMins);
+      }
+      return;
+    }
+
+    // ===== ここから休憩フェーズの「残り10秒」判定 =====
+    if (currentPhase === 'break') {
+      // 残り10秒を切ったら赤背景＆アラーム開始
+      if (timeLeft === 10) {
+        setBackgroundClass('alert');
+        setProgressBarClass('alert');
+
+        if (alarmSound) {
+          alarmSound.currentTime = 0;
+          alarmSound.play().catch(err => {
+            console.log("Autoplay blocked?", err);
+          });
+        }
+      }
+
+      // 残り10秒より上なら、背景色は元の休憩色に戻しておく
+      else if (timeLeft > 10) {
+        setBackgroundClass('break');
+        setProgressBarClass('break');
+      }
+    }
+  }
+
+  /** 画面表示更新 */
+  function updateDisplay() {
+    // mm:ss 形式で表示
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timeDisplay').textContent =
+      `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    // プログレスバー幅
+    let ratio = 1;
+    if (initialTime > 0) {
+      ratio = timeLeft / initialTime;
+    }
+    if (ratio < 0) ratio = 0;
+
+    const percent = (ratio * 100).toFixed(2) + '%';
+    document.getElementById('progressBar').style.width = percent;
+  }
+
+  /** 背景色クラス切り替え */
+  function setBackgroundClass(phase) {
+    const body = document.body;
+    body.classList.remove('idle-bg', 'work-bg', 'break-bg', 'alert-bg');
+
+    switch (phase) {
+      case 'work':
+        body.classList.add('work-bg');
+        break;
+      case 'break':
+        body.classList.add('break-bg');
+        break;
+      case 'alert':
+        // ※ フェーズではなく、残り10秒用に使う
+        body.classList.add('alert-bg');
+        break;
+      default:
+        body.classList.add('idle-bg');
+    }
+  }
+
+  /** 進捗バーの色クラスを切り替え */
+  function setProgressBarClass(phase) {
+    const progressBar = document.getElementById('progressBar');
+    progressBar.classList.remove('idle-progress', 'work-progress', 'break-progress', 'alert-progress');
+
+    switch (phase) {
+      case 'work':
+        progressBar.classList.add('work-progress');
+        break;
+      case 'break':
+        progressBar.classList.add('break-progress');
+        break;
+      case 'alert':
+        progressBar.classList.add('alert-progress');
+        break;
+      default:
+        progressBar.classList.add('idle-progress');
+    }
+  }
+  </script>
+
+</body>
+</html>
+
 
   <script src="main.js"></script>
 </body>

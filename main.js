@@ -97,7 +97,7 @@ function setPhase(phase, minutes) {
   const phaseLabel = document.getElementById('phaseLabel');
   switch (phase) {
     case 'work':
-      phaseLabel.textContent = '作業中';
+      phaseLabel.textContent = '学習中';
       break;
     case 'break':
       phaseLabel.textContent = '休憩中';

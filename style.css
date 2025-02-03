@@ -17,7 +17,7 @@
     background-color: #f8f8f8; /* 待機/停止中: グレー */
   }
   body.work-bg {
-    background-color: #159e53; /* 作業中: 緑 */
+    background-color: #08b556; /* 作業中: 緑 */
   }
   body.break-bg {
     background-color: #227ba4; /* 休憩中: 青 */
