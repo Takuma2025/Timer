@@ -1,0 +1,161 @@
+/* ========================================
+   画面全体（body）をフェーズごとに背景色を切り替え
+   ======================================== */
+   body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; 
+  }
+  
+  /* フェーズ別の背景色（画面全体） */
+  body.idle-bg {
+    background-color: #f8f8f8; /* 待機/停止中: グレー */
+  }
+  body.work-bg {
+    background-color: #159e53; /* 作業中: 緑 */
+  }
+  body.break-bg {
+    background-color: #227ba4; /* 休憩中: 青 */
+  }
+  body.alert-bg {
+    background-color: #cf2e2e; /* 休憩終了後10秒: 赤 */
+  }
+  
+  
+  /* ========================================
+     メインコンテナ（中央寄せ・レイアウト用）
+     ======================================== */
+  .timer-container {
+    text-align: center;
+    width: 90%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* タイトルは小さめ */
+  h1 {
+    margin-bottom: 20px;
+    font-size: 1rem;
+  }
+  
+  
+  /* ========================================
+     入力エリア
+     ======================================== */
+  .input-area label {
+    margin-right: 5px;
+  }
+  .input-area input[type="number"] {
+    width: 60px;
+    text-align: right;
+    margin: 0 10px 0 0;
+    padding: 5px;
+  }
+  
+  
+  /* ========================================
+     ボタンエリア
+     ======================================== */
+  .button-area button {
+    padding: 10px 20px;
+    margin: 10px 5px 0 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  .button-area button:hover {
+    background: #ddd;
+  }
+  
+  
+  /* ========================================
+     タイマー表示部分（白背景に）
+     ======================================== */
+  .timer-display {
+    margin-top: 20px;
+    
+    /* ★ 常に白背景、パネル風にする ★ */
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 1em;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    /* コンテンツが大きくなっても横スクロールしないように */
+    box-sizing: border-box;
+    width: 100%;
+  }
+  
+  /* フェーズラベル（作業中／休憩中など） */
+  .phase {
+    /* 画面幅が狭いときは小さく、広いときは大きく表示 */
+    font-size: clamp(2rem, 5vw, 4rem);
+    margin-bottom: 0.5em;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  /* 残り時間を大きく表示。はみ出さないようclampを活用 */
+  #timeDisplay {
+    /* 最小 3rem、推奨 15vw、最大 10rem */
+    font-size: clamp(3rem, 15vw, 10rem);
+    font-weight: bold;
+    color: #000;
+    line-height: 1; /* 文字を詰める */
+    white-space: nowrap; /* 改行を起こさず1行で表示 */
+    overflow: hidden;    /* はみ出しを隠す */
+    text-overflow: ellipsis; /* もし溢れたら「...」になる */
+  }
+  
+  /* ========================================
+     棒グラフ型プログレスバー
+     ======================================== */
+  .progress-container {
+    margin-top: 1em;
+    width: 90%;
+    max-width: 500px;
+    height: 20px;
+    background-color: #ccc; /* バー下地 */
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  /* バー本体（幅と色を変える） */
+  .progress-bar {
+    width: 0%;
+    height: 100%;
+    transition: width 0.3s linear;
+    border-radius: 10px;
+  }
+  
+  /* フェーズごとに色を切り替えるクラス */
+  .idle-progress {
+    background-color: #666; 
+  }
+  .work-progress {
+    background-color: #2e7d32; 
+  }
+  .break-progress {
+    background-color: #1565c0; 
+  }
+  .alert-progress {
+    background-color: #c62828;
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>タイマー</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="idle-bg">
+  <div class="timer-container">
+    <h1>タイマー設定</h1>
+
+    <!-- 入力エリア -->
+    <div class="input-area">
+      <label for="workTime">作業時間(分):</label>
+      <input type="number" id="workTime" value="65" min="1">
+
+      <label for="breakTime">休憩時間(分):</label>
+      <input type="number" id="breakTime" value="5" min="1">
+    </div>
+
+    <!-- ボタンエリア -->
+    <div class="button-area">
+      <button id="startBtn">スタート</button>
+      <button id="stopBtn" disabled>ストップ</button>
+    </div>
+
+    <!-- タイマー表示。ここだけは常に白背景にする -->
+    <div class="timer-display">
+      <span class="phase" id="phaseLabel">待機中</span>
+      <span id="timeDisplay">00:00</span>
+      <div class="progress-container">
+        <div class="progress-bar idle-progress" id="progressBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ▼ 追加: オーディオ要素を配置。hiddenで非表示にするなどお好みでOK -->
+  <audio id="beepSound" src="beep.mp3" preload="auto"></audio>
+  <audio id="alarmSound" src="alarm.mp3" preload="auto" loop></audio>
+  <!-- ▲ alarmSound は loop属性をつけて10秒間繰り返し再生させる想定 -->
+
+  <script src="main.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
